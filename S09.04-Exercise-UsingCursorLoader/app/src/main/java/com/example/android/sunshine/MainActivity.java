@@ -58,9 +58,11 @@ public class MainActivity extends AppCompatActivity implements
 //  TODO (16) Create a String array containing the names of the desired data columns from our ContentProvider
 
 //  TODO (17) Create constant int values representing each column name's position above
-
+public static final int INDEX_WEATHER_DATE = 0;
+    public static final int INDEX_WEATHER_MAX_TEMP = 1;
+    public static final int INDEX_WEATHER_MIN_TEMP = 2;
+    public static final int INDEX_WEATHER_CONDITION_ID = 3;
 //  TODO (37) Remove the error TextView
-    private TextView mErrorMessageDisplay;
 
     /*
      * This ID will be used to identify the Loader responsible for loading our weather forecast. In
@@ -78,7 +80,7 @@ public class MainActivity extends AppCompatActivity implements
     private ProgressBar mLoadingIndicator;
 
     //  TODO (35) Remove the preference change flag
-    private static boolean PREFERENCES_HAVE_BEEN_UPDATED = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

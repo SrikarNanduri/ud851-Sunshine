@@ -18,9 +18,14 @@ package com.example.android.sunshine.data;
 import android.annotation.TargetApi;
 import android.content.ContentProvider;
 import android.content.ContentValues;
+import android.content.UriMatcher;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.support.annotation.NonNull;
+
+import static com.example.android.sunshine.data.WeatherContract.WeatherEntry.COLUMN_DATE;
+import static com.example.android.sunshine.data.WeatherContract.WeatherEntry.TABLE_NAME;
 
 /**
  * This class serves as the ContentProvider for all of Sunshine's data. This class allows us to
@@ -35,20 +40,37 @@ import android.support.annotation.NonNull;
 public class WeatherProvider extends ContentProvider {
 
 //  TODO (5) Create static constant integer values named CODE_WEATHER & CODE_WEATHER_WITH_DATE to identify the URIs this ContentProvider can handle
+public static final int CODE_WEATHER =100;
+public static final int CODE_WEATHER_WITH_DATE =101;
 
 //  TODO (7) Instantiate a static UriMatcher using the buildUriMatcher method
 
     WeatherDbHelper mOpenHelper;
 
+    private static final UriMatcher sUriMatcher = buildUriMatcher();
 //  TODO (6) Write a method called buildUriMatcher where you match URI's to their numeric ID
+public static UriMatcher buildUriMatcher() {
 
+    // Initialize a UriMatcher with no matches by passing in NO_MATCH to the constructor
+    UriMatcher uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
+
+        /*
+          All paths added to the UriMatcher have a corresponding int.
+          For each kind of uri you may want to access, add the corresponding match with addURI.
+          The two calls below add matches for the task directory and a single item by ID.
+         */
+    uriMatcher.addURI(WeatherContract.CONTENT_AUTHORITY, WeatherContract.PATH_WEATHER, CODE_WEATHER);
+    uriMatcher.addURI(WeatherContract.CONTENT_AUTHORITY, WeatherContract.PATH_WEATHER + "/#", CODE_WEATHER_WITH_DATE);
+
+    return uriMatcher;
+}
 //  TODO (1) Implement onCreate
     @Override
     public boolean onCreate() {
 //      TODO (2) Within onCreate, instantiate our mOpenHelper
-
+mOpenHelper = new WeatherDbHelper(getContext());
 //      TODO (3) Return true from onCreate to signify success performing setup
-        return false;
+        return true;
     }
 
     /**
@@ -88,10 +110,55 @@ public class WeatherProvider extends ContentProvider {
     @Override
     public Cursor query(@NonNull Uri uri, String[] projection, String selection,
                         String[] selectionArgs, String sortOrder) {
-        throw new RuntimeException("Student, implement the query method!");
-
 //      TODO (9) Handle queries on both the weather and weather with date URI
+        final SQLiteDatabase db = mOpenHelper.getReadableDatabase();
 
+        // Write URI match code and set a variable to return a Cursor
+        int match = sUriMatcher.match(uri);
+        Cursor retCursor;
+
+        // Query for the tasks directory and write a default case
+        switch (match) {
+            // Query for the tasks directory
+
+
+            case CODE_WEATHER_WITH_DATE: {
+                // Get the id from the URI
+                String normalizedUtcDateString = uri.getLastPathSegment();
+
+                // Selection is the _ID column = ?, and the Selection args = the row ID from the URI
+                String[] mSelectionArgs = new String[]{normalizedUtcDateString};
+
+                // Construct a query as you would normally, passing in the selection/args
+                retCursor = db.query(TABLE_NAME,
+                        projection,
+                        COLUMN_DATE + " = ? ",
+                        mSelectionArgs,
+                        null,
+                        null,
+                        sortOrder);
+                break;
+            }
+
+            case CODE_WEATHER:
+                retCursor =  db.query(TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder);
+                break;
+            // Default exception
+            default:
+                throw new UnsupportedOperationException("Unknown uri: " + uri);
+        }
+
+        // Set a notification URI on the Cursor and return that Cursor
+        retCursor.setNotificationUri(getContext().getContentResolver(), uri);
+
+        // Return the desired Cursor
+        return retCursor;
 //      TODO (10) Call setNotificationUri on the cursor and then return the cursor
     }
 
